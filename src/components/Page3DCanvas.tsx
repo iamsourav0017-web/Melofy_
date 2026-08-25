@@ -344,8 +344,8 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
     };
   }, [isPlaying, activeSection]);
 
-  const isHeroActive = activeSection === 'hero' || activeSection === '';
-  const currentVideoOpacity = enableHeroVideo ? (isHeroActive ? heroVideoOpacity : heroVideoOpacity * 0.25) : 0;
+  // Background video opacity remains consistent throughout the page
+  const currentVideoOpacity = enableHeroVideo ? (heroVideoOpacity ?? 0.35) : 0;
 
   // Object fit styling
   const getObjectFitClass = () => {
@@ -366,7 +366,7 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
       {/* Dynamic Background Video Loop Layer */}
       {enableHeroVideo && heroVideoUrl && (
         <div
-          className="absolute inset-0 w-full h-full transition-opacity duration-1000 ease-out"
+          className="absolute inset-0 w-full h-full"
           style={{
             opacity: currentVideoOpacity,
             filter: `blur(${heroVideoBlur}px) brightness(${heroVideoBrightness}%) contrast(${heroVideoContrast}%)`
@@ -382,21 +382,18 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
             onLoadedData={() => setVideoLoaded(true)}
             className={`w-full h-full ${getObjectFitClass()}`}
           />
-          {/* Configurable Overlay Tints */}
+          {/* Configurable Overlay Tints with uniform full-page consistency */}
           {heroVideoOverlayTint === 'vignette' && (
-            <>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--bg-main)]/20 to-[var(--bg-main)]/80 pointer-events-none" />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(23,26,28,0.3)_100%)] pointer-events-none" />
-            </>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.3)_100%)] pointer-events-none" />
           )}
           {heroVideoOverlayTint === 'gradient' && (
-            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-main)]/40 via-transparent to-[var(--bg-main)] pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-main)]/20 via-transparent to-[var(--bg-main)]/20 pointer-events-none" />
           )}
           {heroVideoOverlayTint === 'dark' && (
-            <div className="absolute inset-0 bg-[#090A0C]/50 pointer-events-none" />
+            <div className="absolute inset-0 bg-[#090A0C]/30 pointer-events-none" />
           )}
           {heroVideoOverlayTint === 'subtle' && (
-            <div className="absolute inset-0 bg-[var(--bg-main)]/30 pointer-events-none" />
+            <div className="absolute inset-0 bg-[var(--bg-main)]/15 pointer-events-none" />
           )}
         </div>
       )}

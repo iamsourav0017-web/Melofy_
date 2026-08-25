@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({
   return (
     <footer
       id="footer"
-      className="relative w-full bg-[#171A1C] text-white pt-20 pb-28 border-t border-white/10 z-10"
+      className="relative w-full bg-transparent text-[var(--text-main)] pt-20 pb-28 border-t border-[var(--card-border)] z-10"
       style={{
         paddingLeft: 'clamp(20px, 5vw, 80px)',
         paddingRight: 'clamp(20px, 5vw, 80px)'
@@ -50,7 +50,7 @@ export const Footer: React.FC<FooterProps> = ({
           >
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-[var(--accent)]" />
-              <span className="font-display font-black text-2xl tracking-widest text-white">
+              <span className="font-display font-black text-2xl tracking-widest text-[var(--text-main)]">
                 MELOFY
               </span>
             </div>
@@ -68,7 +68,7 @@ export const Footer: React.FC<FooterProps> = ({
               onSave={(val) => onUpdateContent({ description: val })}
               isEditingGlobal={isEditMode}
               multiline
-              className="font-body text-xs sm:text-sm text-white/60 leading-relaxed max-w-sm block"
+              className="font-body text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed max-w-sm block"
               as="p"
             />
           </motion.div>
@@ -81,7 +81,7 @@ export const Footer: React.FC<FooterProps> = ({
             transition={{ duration: 0.8, delay: 0.15, ease: premiumEase }}
             className="md:col-span-3 space-y-3"
           >
-            <p className="font-display font-bold text-xs tracking-wider uppercase text-white/40">
+            <p className="font-display font-bold text-xs tracking-wider uppercase text-[var(--text-muted)]">
               EXPLORE
             </p>
             <ul className="space-y-2 text-xs font-body">
@@ -89,7 +89,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => onScrollTo('#portfolio')}
-                  className="text-white/70 hover:text-[var(--accent)] transition-colors cursor-pointer"
+                  className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
                   Audio Catalogue
                 </button>
@@ -98,7 +98,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => onScrollTo('#about')}
-                  className="text-white/70 hover:text-[var(--accent)] transition-colors cursor-pointer"
+                  className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
                   Studio Philosophy
                 </button>
@@ -107,7 +107,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => onScrollTo('#how-it-works')}
-                  className="text-white/70 hover:text-[var(--accent)] transition-colors cursor-pointer"
+                  className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
                   Composition Pipeline
                 </button>
@@ -116,7 +116,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => onScrollTo('#pricing')}
-                  className="text-white/70 hover:text-[var(--accent)] transition-colors cursor-pointer"
+                  className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
                   Pricing & Deliverables
                 </button>
@@ -125,7 +125,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <button
                   type="button"
                   onClick={() => onScrollTo('#contact')}
-                  className="text-white/70 hover:text-[var(--accent)] transition-colors cursor-pointer"
+                  className="text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
                   Start Your Song
                 </button>
@@ -141,10 +141,10 @@ export const Footer: React.FC<FooterProps> = ({
             transition={{ duration: 0.8, delay: 0.3, ease: premiumEase }}
             className="md:col-span-4 space-y-4"
           >
-            <p className="font-display font-bold text-xs tracking-wider uppercase text-white/40">
+            <p className="font-display font-bold text-xs tracking-wider uppercase text-[var(--text-muted)]">
               CONNECT
             </p>
-            <p className="font-body text-xs text-white/70">
+            <p className="font-body text-xs text-[var(--text-muted)]">
               Have questions or want a bespoke orchestral arrangement?
             </p>
             <EditableText
@@ -159,7 +159,7 @@ export const Footer: React.FC<FooterProps> = ({
               <button
                 type="button"
                 onClick={scrollToTop}
-                className="font-body text-xs font-semibold px-4 py-2 rounded-full bg-white/10 text-white hover:bg-[var(--accent)] hover:text-[#171A1C] transition-all flex items-center gap-2 cursor-pointer"
+                className="font-body text-xs font-semibold px-4 py-2 rounded-full bg-white/10 hover:bg-[var(--accent)] text-[var(--text-main)] hover:text-[#171A1C] transition-all flex items-center gap-2 cursor-pointer border border-[var(--card-border)]"
               >
                 <span>Back to Top</span>
                 <ArrowUp className="w-3.5 h-3.5" />
@@ -175,7 +175,7 @@ export const Footer: React.FC<FooterProps> = ({
           whileInView={{ opacity: 1 }}
           viewport={defaultViewport}
           transition={{ duration: 0.8, delay: 0.45, ease: premiumEase }}
-          className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-code text-white/40"
+          className="pt-8 border-t border-[var(--card-border)] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-code text-[var(--text-muted)]"
         >
           <div>
             <EditableText
@@ -186,7 +186,7 @@ export const Footer: React.FC<FooterProps> = ({
             />
           </div>
 
-          <div className="flex items-center gap-4 text-white/40">
+          <div className="flex items-center gap-4 text-[var(--text-muted)]">
             <span>Handcrafted Studio Audio • Bespoke Compositions</span>
           </div>
         </motion.div>

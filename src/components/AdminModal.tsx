@@ -276,6 +276,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     if (file) {
       processAudioFile(file);
     }
+    // Reset file input target value so re-selecting the same file name triggers onChange
+    e.target.value = '';
   };
 
   const handleAudioDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -1860,6 +1862,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                               };
                               reader.readAsDataURL(file);
                             }
+                            e.target.value = '';
                           }}
                           className="hidden"
                         />
