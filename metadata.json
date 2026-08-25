@@ -1,0 +1,6 @@
+{
+  "name": "Melofy — Custom Music Studio",
+  "description": "Custom music studio turning personal stories into original songs across all genres with interactive audio player, dynamic pricing, and inquiry workflow.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
