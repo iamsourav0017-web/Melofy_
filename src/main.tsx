@@ -14,36 +14,40 @@ try {
 
 // Safeguard against browser / framework Performance.measure memory errors (DataCloneError)
 if (typeof window !== 'undefined' && window.performance) {
-  const origMeasure = window.performance.measure?.bind(window.performance);
-  if (origMeasure) {
-    window.performance.measure = function (
-      name: string,
-      startOrMeasureOptions?: any,
-      endMark?: any
-    ) {
-      try {
-        return origMeasure(name, startOrMeasureOptions, endMark);
-      } catch {
+  try {
+    const origMeasure = window.performance.measure?.bind(window.performance);
+    if (origMeasure) {
+      window.performance.measure = function (
+        name: string,
+        startOrMeasureOptions?: any,
+        endMark?: any
+      ) {
         try {
-          window.performance.clearMarks();
-          window.performance.clearMeasures();
+          return origMeasure(name, startOrMeasureOptions, endMark);
         } catch {
-          // Ignore
+          try {
+            window.performance.clearMarks();
+            window.performance.clearMeasures();
+          } catch {
+            // Ignore
+          }
+          return undefined as any;
         }
-        return undefined as any;
-      }
-    };
-  }
+      };
+    }
 
-  const origMark = window.performance.mark?.bind(window.performance);
-  if (origMark) {
-    window.performance.mark = function (name: string, markOptions?: any) {
-      try {
-        return origMark(name, markOptions);
-      } catch {
-        return undefined as any;
-      }
-    };
+    const origMark = window.performance.mark?.bind(window.performance);
+    if (origMark) {
+      window.performance.mark = function (name: string, markOptions?: any) {
+        try {
+          return origMark(name, markOptions);
+        } catch {
+          return undefined as any;
+        }
+      };
+    }
+  } catch (_) {
+    // Ignore performance override errors in strict browser security contexts
   }
 }
 
