@@ -7,6 +7,8 @@ import { EditableText } from './EditableText';
 import { premiumEase } from '../utils/motionTransitions';
 import { Magnetic, KineticBadge, EqualizerMicroBars } from './InteractiveEffects';
 import { optimizeImageFile } from '../utils/mediaStorage';
+import { ParallaxSection, ParallaxLayer, ParallaxFloatingAura } from './ParallaxContainer';
+import { RapidCounterStat } from './RapidCounterStat';
 
 interface HeroSectionProps {
   isPlaying: boolean;
@@ -59,14 +61,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <section
+    <ParallaxSection
       id="hero"
-      className="relative w-full min-h-[100svh] flex items-center justify-center overflow-hidden bg-transparent pt-24 pb-16 z-10"
+      offset={['start start', 'end start']}
+      className="min-h-[100svh] flex items-center justify-center overflow-hidden bg-transparent pt-24 pb-16 z-10"
       style={{
         paddingLeft: 'clamp(20px, 5vw, 80px)',
         paddingRight: 'clamp(20px, 5vw, 80px)'
       }}
     >
+      {/* Parallax Ambient Aura Halos */}
+      <ParallaxFloatingAura
+        color="var(--accent)"
+        size={420}
+        top="-10%"
+        left="5%"
+        speed={0.4}
+        yRange={[0, 90]}
+        opacity={0.12}
+      />
+      <ParallaxFloatingAura
+        color="#F43F5E"
+        size={380}
+        top="40%"
+        right="5%"
+        speed={0.6}
+        yRange={[0, 110]}
+        opacity={0.08}
+      />
+
       {/* Quick Hero Video Floating Admin Toolbar when in Admin Mode */}
       {isAdminMode && (
         <div className="absolute top-20 right-6 z-30">
@@ -232,11 +255,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
       )}
 
-      <div className="max-w-[1440px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <div className="max-w-[1440px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
         
-        {/* Left Column: Bold Oversized Editorial Typography with Kinetic Reveal */}
-        <div className="lg:col-span-6 xl:col-span-6 flex flex-col justify-center z-10 space-y-7">
-          
+        {/* Left Column: Bold Oversized Editorial Typography with Parallax Layer */}
+        <ParallaxLayer
+          yRange={[0, -28]}
+          className="lg:col-span-6 xl:col-span-6 flex flex-col justify-center z-10 space-y-7"
+        >
           {/* Studio Tag / Category Indicator with Kinetic Badge & Micro Equalizer */}
           <KineticBadge isPlaying={isPlaying} delay={0.1}>
             <EqualizerMicroBars isPlaying={isPlaying} barCount={3} />
@@ -364,85 +389,80 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </Magnetic>
           </motion.div>
 
-          {/* Quick Studio Credibility Ticker */}
+          {/* Quick Studio Credibility Ticker with Rapid Count-up and Flash */}
           <motion.div
             initial={shouldReduceMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.95, ease: premiumEase }}
-            className="pt-6 border-t border-[var(--text-main)]/10 flex items-center gap-8"
+            className="pt-6 border-t border-[var(--text-main)]/10 flex items-center gap-6 sm:gap-8 flex-wrap"
           >
-            <div>
-              <EditableText
-                value={content.stat1Number}
-                onSave={(val) => onUpdateContent({ stat1Number: val })}
-                isEditingGlobal={isEditMode}
-                className="font-display font-bold text-2xl text-[var(--text-main)] block"
-                as="p"
-              />
-              <EditableText
-                value={content.stat1Label}
-                onSave={(val) => onUpdateContent({ stat1Label: val })}
-                isEditingGlobal={isEditMode}
-                className="font-body text-xs text-[var(--text-muted)] block"
-                as="p"
-              />
-            </div>
-            <div className="w-[1px] h-8 bg-[var(--text-main)]/15" />
-            <div>
-              <EditableText
-                value={content.stat2Number}
-                onSave={(val) => onUpdateContent({ stat2Number: val })}
-                isEditingGlobal={isEditMode}
-                className="font-display font-bold text-2xl text-[var(--text-main)] block"
-                as="p"
-              />
-              <EditableText
-                value={content.stat2Label}
-                onSave={(val) => onUpdateContent({ stat2Label: val })}
-                isEditingGlobal={isEditMode}
-                className="font-body text-xs text-[var(--text-muted)] block"
-                as="p"
-              />
-            </div>
-            <div className="w-[1px] h-8 bg-[var(--text-main)]/15" />
-            <div>
-              <EditableText
-                value={content.stat3Number}
-                onSave={(val) => onUpdateContent({ stat3Number: val })}
-                isEditingGlobal={isEditMode}
-                className="font-display font-bold text-2xl text-[var(--text-main)] block"
-                as="p"
-              />
-              <EditableText
-                value={content.stat3Label}
-                onSave={(val) => onUpdateContent({ stat3Label: val })}
-                isEditingGlobal={isEditMode}
-                className="font-body text-xs text-[var(--text-muted)] block"
-                as="p"
-              />
-            </div>
-          </motion.div>
-        </div>
+            <RapidCounterStat
+              id="hero-stat-1"
+              numberValue={content.stat1Number}
+              labelValue={content.stat1Label}
+              onSaveNumber={(val) => onUpdateContent({ stat1Number: val })}
+              onSaveLabel={(val) => onUpdateContent({ stat1Label: val })}
+              isEditingGlobal={isEditMode}
+              delay={0.3}
+              duration={1.2}
+              soundVariant={0}
+            />
 
-        {/* Right Column: Live Interactive Line-Art Couple in Revolving 3D Musical Orb */}
-        <motion.div
-          initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.96, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 1.0, delay: 0.4, ease: premiumEase }}
-          className="lg:col-span-6 xl:col-span-6 relative flex flex-col items-center justify-center"
+            <div className="w-[1px] h-8 bg-[var(--text-main)]/15 shrink-0" />
+
+            <RapidCounterStat
+              id="hero-stat-2"
+              numberValue={content.stat2Number}
+              labelValue={content.stat2Label}
+              onSaveNumber={(val) => onUpdateContent({ stat2Number: val })}
+              onSaveLabel={(val) => onUpdateContent({ stat2Label: val })}
+              isEditingGlobal={isEditMode}
+              delay={0.5}
+              duration={1.3}
+              soundVariant={1}
+            />
+
+            {content.stat3Number && (
+              <>
+                <div className="w-[1px] h-8 bg-[var(--text-main)]/15 shrink-0" />
+                <RapidCounterStat
+                  id="hero-stat-3"
+                  numberValue={content.stat3Number}
+                  labelValue={content.stat3Label}
+                  onSaveNumber={(val) => onUpdateContent({ stat3Number: val })}
+                  onSaveLabel={(val) => onUpdateContent({ stat3Label: val })}
+                  isEditingGlobal={isEditMode}
+                  delay={0.7}
+                  duration={1.2}
+                  soundVariant={2}
+                />
+              </>
+            )}
+          </motion.div>
+        </ParallaxLayer>
+
+        {/* Right Column: Live Interactive Line-Art Couple in Revolving 3D Musical Orb with Parallax Depth */}
+        <ParallaxLayer
+          yRange={[0, 36]}
+          className="lg:col-span-6 xl:col-span-6 relative flex flex-col items-center justify-center z-10"
         >
-          <div className="w-full relative flex items-center justify-center">
+          <motion.div
+            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.96, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 1.0, delay: 0.4, ease: premiumEase }}
+            className="w-full relative flex items-center justify-center"
+          >
             <MelofyHeroStoryVisual
               isPlaying={isPlaying}
               brandConfig={brandConfig}
               isAdminMode={isAdminMode}
               onUpdateBrandConfig={onUpdateBrandConfig}
             />
-          </div>
-        </motion.div>
+          </motion.div>
+        </ParallaxLayer>
 
       </div>
-    </section>
+    </ParallaxSection>
   );
 };
 

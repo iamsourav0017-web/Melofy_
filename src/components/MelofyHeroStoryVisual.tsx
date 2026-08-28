@@ -141,6 +141,8 @@ export const MelofyHeroStoryVisual: React.FC<MelofyHeroStoryVisualProps> = ({
     studioAudio.playUiClick('button');
   }, [handlePersistChanges]);
 
+  const mouseAnimRef = useRef<number | null>(null);
+
   // Container Mouse Move (for Parallax & 3D Orb Rotation)
   const handleContainerPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -150,7 +152,12 @@ export const MelofyHeroStoryVisual: React.FC<MelofyHeroStoryVisualProps> = ({
     const normalizedX = (x / rect.width - 0.5) * 2;
     const normalizedY = (y / rect.height - 0.5) * 2;
 
-    setMousePos({ x, y, normalizedX, normalizedY });
+    if (!mouseAnimRef.current) {
+      mouseAnimRef.current = requestAnimationFrame(() => {
+        mouseAnimRef.current = null;
+        setMousePos({ x, y, normalizedX, normalizedY });
+      });
+    }
 
     // Handle 3D Orb Rotation
     if (isRotating3D && interactionMode === 'orbit') {

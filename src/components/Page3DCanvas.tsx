@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { LazyVideo } from './LazyVideo';
 
 interface Page3DCanvasProps {
   isPlaying: boolean;
   activeSection: string;
   enableHeroVideo?: boolean;
   heroVideoUrl?: string;
+  heroVideoPoster?: string;
   heroVideoOpacity?: number;
   heroVideoFit?: 'cover' | 'contain' | 'fill' | 'scale-down';
   heroVideoBlur?: number;
@@ -39,6 +41,7 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
   activeSection,
   enableHeroVideo = false,
   heroVideoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-sound-waves-moving-on-a-dark-background-42999-large.mp4',
+  heroVideoPoster = 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1920&q=80',
   heroVideoOpacity = 0.35,
   heroVideoFit = 'cover',
   heroVideoBlur = 0,
@@ -51,7 +54,7 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [, setVideoLoaded] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   // Play / pause video sync & playback properties
   useEffect(() => {
@@ -59,9 +62,17 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
       videoRef.current.playbackRate = heroVideoPlaybackRate || 1.0;
       videoRef.current.muted = heroVideoMuted !== false;
       videoRef.current.loop = heroVideoLoop !== false;
-      videoRef.current.play().catch(() => {
-        // Auto-play policy fallback
-      });
+      videoRef.current.preload = 'auto';
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setVideoLoaded(true);
+          })
+          .catch(() => {
+            // Auto-play policy fallback
+          });
+      }
     }
   }, [enableHeroVideo, heroVideoUrl, heroVideoPlaybackRate, heroVideoMuted, heroVideoLoop]);
 
@@ -149,13 +160,17 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
     };
     window.addEventListener('click', onWindowClick);
 
-    // Dynamic Theme Accent Color Resolver
-    const getThemeAccent = (): string => {
-      if (typeof window === 'undefined') return '#15BCDF';
-      const rootStyle = getComputedStyle(document.documentElement);
-      const acc = rootStyle.getPropertyValue('--accent').trim();
-      return acc || '#15BCDF';
+    // Dynamic Theme Accent Color Resolver cached to prevent getComputedStyle layout thrashing in 60fps loop
+    let cachedThemeAccent = '#15BCDF';
+    const updateThemeAccent = () => {
+      if (typeof window === 'undefined') return;
+      try {
+        const rootStyle = getComputedStyle(document.documentElement);
+        const acc = rootStyle.getPropertyValue('--accent').trim();
+        if (acc) cachedThemeAccent = acc;
+      } catch (_) {}
     };
+    updateThemeAccent();
 
     const render = () => {
       time += 0.016;
@@ -199,7 +214,7 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
-      const themeAccent = getThemeAccent();
+      const themeAccent = cachedThemeAccent;
 
       // Subtle atmospheric 3D gradient aura around center
       const cx = width / 2 + mouseX * 40;
@@ -300,7 +315,7 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
       // Sort particles back-to-front
       projectedParticles.sort((a, b) => b.z - a.z);
 
-      // Render Sleek Particles
+      // Render Sleek Particles directly without save/restore overhead
       for (const item of projectedParticles) {
         const { sx, sy, scale, p } = item;
         
@@ -308,27 +323,26 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
         const pulse = isPlaying ? Math.sin(time * 2.5 + p.orbitAngle * 5) * 0.35 + 0.75 : 1;
         const rad = Math.max(0.5, p.size * scale * pulse) + (clickRipple * scale * 2);
         
-        ctx.save();
-        ctx.translate(sx, sy);
-        
+        const particleColor = p.color === '#15BCDF' ? themeAccent : p.color;
+
         // Luminous Core
         ctx.beginPath();
-        ctx.arc(0, 0, rad, 0, Math.PI * 2);
-        ctx.fillStyle = p.color === '#15BCDF' ? themeAccent : p.color;
+        ctx.arc(sx, sy, rad, 0, Math.PI * 2);
+        ctx.fillStyle = particleColor;
         ctx.globalAlpha = depthAlpha * (isPlaying ? 1.0 : 0.6) + (clickRipple * 0.4);
         ctx.fill();
 
         // Soft glow for larger particles
         if (p.size > 1.5 || clickRipple > 0 || isPlaying) {
           ctx.beginPath();
-          ctx.arc(0, 0, rad * 3, 0, Math.PI * 2);
-          ctx.fillStyle = p.color === '#15BCDF' ? themeAccent : p.color;
+          ctx.arc(sx, sy, rad * 3, 0, Math.PI * 2);
+          ctx.fillStyle = particleColor;
           ctx.globalAlpha = (depthAlpha * 0.18) + (clickRipple * 0.15);
           ctx.fill();
         }
-
-        ctx.restore();
       }
+
+      ctx.globalAlpha = 1.0;
 
       animId = requestAnimationFrame(render);
     };
@@ -358,6 +372,12 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
     }
   };
 
+  // Compute CSS filter string safely (skip filter pass if non-customized for GPU performance)
+  const hasCustomFilter = (heroVideoBlur ?? 0) > 0 || (heroVideoBrightness ?? 95) !== 100 || (heroVideoContrast ?? 105) !== 100;
+  const videoFilterStyle = hasCustomFilter
+    ? `blur(${heroVideoBlur || 0}px) brightness(${heroVideoBrightness ?? 100}%) contrast(${heroVideoContrast ?? 100}%)`
+    : undefined;
+
   return (
     <div
       id="page-3d-background-wrapper"
@@ -366,22 +386,23 @@ export const Page3DCanvas: React.FC<Page3DCanvasProps> = ({
       {/* Dynamic Background Video Loop Layer */}
       {enableHeroVideo && heroVideoUrl && (
         <div
-          className="absolute inset-0 w-full h-full"
+          className="absolute inset-0 w-full h-full transition-opacity duration-700 ease-out"
           style={{
             opacity: currentVideoOpacity,
-            filter: `blur(${heroVideoBlur}px) brightness(${heroVideoBrightness}%) contrast(${heroVideoContrast}%)`
+            filter: videoFilterStyle
           }}
         >
-          <video
-            ref={videoRef}
+          <LazyVideo
             src={heroVideoUrl}
-            autoPlay
+            poster={heroVideoPoster}
+            objectFitClass={getObjectFitClass()}
             loop={heroVideoLoop !== false}
             muted={heroVideoMuted !== false}
-            playsInline
-            onLoadedData={() => setVideoLoaded(true)}
-            className={`w-full h-full ${getObjectFitClass()}`}
+            playbackRate={heroVideoPlaybackRate}
+            autoPlay={true}
+            onVideoReady={() => setVideoLoaded(true)}
           />
+
           {/* Configurable Overlay Tints with uniform full-page consistency */}
           {heroVideoOverlayTint === 'vignette' && (
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.3)_100%)] pointer-events-none" />

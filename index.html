@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth dark" style="background-color: #090A0C; color: #FFFFFF;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,11 +8,51 @@
     <meta property="og:title" content="Melofy — Custom Music Studio" />
     <meta property="og:description" content="Your story, turned into a song. Custom original songs composed from your memories, moments, and emotions." />
     <meta property="og:type" content="website" />
+
+    <!-- Instant Pre-Paint Theme Hydration: Prevents any white flash, static hit, or theme pop on reload -->
+    <script>
+      (function() {
+        try {
+          var root = document.documentElement;
+          var stored = localStorage.getItem('melofy_theme_v1');
+          if (stored) {
+            var theme = JSON.parse(stored);
+            if (theme) {
+              if (theme.backgroundColor) {
+                root.style.setProperty('--bg-main', theme.backgroundColor);
+                root.style.backgroundColor = theme.backgroundColor;
+              }
+              if (theme.textColor) root.style.setProperty('--text-main', theme.textColor);
+              if (theme.accentColor) root.style.setProperty('--accent', theme.accentColor);
+              if (theme.accentHoverColor) root.style.setProperty('--accent-hover', theme.accentHoverColor);
+              if (theme.cardBackgroundColor) root.style.setProperty('--card-bg', theme.cardBackgroundColor);
+              if (theme.cardBorderColor) root.style.setProperty('--card-border', theme.cardBorderColor);
+              if (theme.fontHeading) root.style.setProperty('--font-display', '"' + theme.fontHeading + '", -apple-system, BlinkMacSystemFont, sans-serif');
+              if (theme.fontBody) root.style.setProperty('--font-body', '"' + theme.fontBody + '", -apple-system, BlinkMacSystemFont, sans-serif');
+              if (theme.mode === 'light') {
+                root.classList.remove('dark');
+                root.classList.add('light');
+              } else {
+                root.classList.remove('light');
+                root.classList.add('dark');
+              }
+            }
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://assets.mixkit.co">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://assets.mixkit.co">
+
+    <!-- High Performance Typography: Space Grotesk + Plus Jakarta Sans + Supporting Display Styles with display=swap -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;1,400&family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap">
   </head>
-  <body class="bg-[var(--bg-main)] text-[var(--text-main)] antialiased selection:bg-[var(--accent)] selection:text-white min-h-screen">
+  <body class="bg-[var(--bg-main)] text-[var(--text-main)] antialiased selection:bg-[var(--accent)] selection:text-white min-h-screen" style="background-color: #090A0C; color: #FFFFFF;">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

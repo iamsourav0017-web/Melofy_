@@ -42,7 +42,15 @@ import {
 } from './types';
 import { studioAudio } from './utils/audioEngine';
 import { applyThemeToDOM, normalizeThemeConfig } from './utils/themeHelper';
-import { safeGetStorage, safeSetStorage, idbGet, idbClear } from './utils/mediaStorage';
+import {
+  safeGetStorage,
+  safeSetStorage,
+  idbGet,
+  idbSet,
+  idbClear,
+  idbGetAudio,
+  idbSetAudio
+} from './utils/mediaStorage';
 
 export default function App() {
   const [isStorageHydrated, setIsStorageHydrated] = useState<boolean>(false);
@@ -172,56 +180,98 @@ export default function App() {
   useEffect(() => {
     let isMounted = true;
 
-    Promise.all([
-      idbGet<Track[]>('melofy_tracks_v3'),
-      idbGet<FullSiteContent>('melofy_content_v1'),
-      idbGet<SiteBrandConfig>('melofy_brand_v1'),
-      idbGet<SiteThemeConfig>('melofy_theme_v1'),
-      idbGet<PricingTier[]>('melofy_pricing_v3'),
-      idbGet<InquirySubmission[]>('melofy_inquiries_v3'),
-      idbGet<UserOrder[]>('melofy_user_orders')
-    ])
-      .then(([idbTracks, idbContent, idbBrand, idbTheme, idbPricing, idbInquiries, idbOrders]) => {
+    async function hydrateStorage() {
+      try {
+        const [
+          idbTracksRes,
+          idbContentRes,
+          idbBrandRes,
+          idbThemeRes,
+          idbPricingRes,
+          idbInquiriesRes,
+          idbOrdersRes
+        ] = await Promise.allSettled([
+          idbGet<Track[]>('melofy_tracks_v3'),
+          idbGet<FullSiteContent>('melofy_content_v1'),
+          idbGet<SiteBrandConfig>('melofy_brand_v1'),
+          idbGet<SiteThemeConfig>('melofy_theme_v1'),
+          idbGet<PricingTier[]>('melofy_pricing_v3'),
+          idbGet<InquirySubmission[]>('melofy_inquiries_v3'),
+          idbGet<UserOrder[]>('melofy_user_orders')
+        ]);
+
         if (!isMounted) return;
 
-        if (idbTracks && Array.isArray(idbTracks) && idbTracks.length > 0) {
-          setTracks(idbTracks);
-        }
-        if (idbContent && idbContent.hero) {
-          setSiteContent((prev) => ({
-            ...prev,
-            ...idbContent,
-            hero: {
-              ...prev.hero,
-              ...(idbContent.hero || {})
-            }
-          }));
-        }
-        if (idbBrand) {
-          setBrandConfig((prev) => ({
-            ...prev,
-            ...idbBrand
-          }));
-        }
-        if (idbTheme) {
-          setThemeConfig(normalizeThemeConfig(idbTheme));
-        }
-        if (idbPricing && Array.isArray(idbPricing) && idbPricing.length > 0) {
-          setPricingTiers(idbPricing);
-        }
-        if (idbInquiries && Array.isArray(idbInquiries)) {
-          setInquiries(idbInquiries);
-        }
-        if (idbOrders && Array.isArray(idbOrders)) {
-          setUserOrders(idbOrders);
+        // 1. Tracks hydration with audio integrity recovery (only update if custom audio blobs exist)
+        if (idbTracksRes.status === 'fulfilled' && idbTracksRes.value && Array.isArray(idbTracksRes.value) && idbTracksRes.value.length > 0) {
+          const loadedTracks = idbTracksRes.value;
+          let hasAudioBlobRestored = false;
+          const enrichedTracks = await Promise.all(
+            loadedTracks.map(async (t) => {
+              if (!t.audioUrl || !t.audioUrl.startsWith('data:')) {
+                try {
+                  const individualAudio = await idbGetAudio(t.id);
+                  if (individualAudio) {
+                    hasAudioBlobRestored = true;
+                    return { ...t, audioUrl: individualAudio };
+                  }
+                } catch (_) {}
+              }
+              return t;
+            })
+          );
+          if (hasAudioBlobRestored) {
+            setTracks(enrichedTracks);
+          }
         }
 
-        setIsStorageHydrated(true);
-      })
-      .catch((err) => {
+        // 2. Site Content hydration (only if custom background video or distinct copy exists)
+        if (idbContentRes.status === 'fulfilled' && idbContentRes.value && idbContentRes.value.hero) {
+          const contentVal = idbContentRes.value;
+          if (contentVal.hero?.backgroundVideoUrl && contentVal.hero.backgroundVideoUrl.startsWith('data:')) {
+            setSiteContent((prev) => ({
+              ...prev,
+              ...contentVal,
+              hero: {
+                ...prev.hero,
+                ...(contentVal.hero || {})
+              }
+            }));
+          }
+        }
+
+        // 3. Brand Config hydration
+        if (idbBrandRes.status === 'fulfilled' && idbBrandRes.value && idbBrandRes.value.heroArtworkUrl?.startsWith('data:')) {
+          setBrandConfig((prev) => ({
+            ...prev,
+            ...idbBrandRes.value
+          }));
+        }
+
+        // 4. Pricing hydration
+        if (idbPricingRes.status === 'fulfilled' && idbPricingRes.value && Array.isArray(idbPricingRes.value) && idbPricingRes.value.length > 0) {
+          setPricingTiers(idbPricingRes.value);
+        }
+
+        // 5. Inquiries hydration
+        if (idbInquiriesRes.status === 'fulfilled' && idbInquiriesRes.value && Array.isArray(idbInquiriesRes.value)) {
+          setInquiries(idbInquiriesRes.value);
+        }
+
+        // 6. Orders hydration
+        if (idbOrdersRes.status === 'fulfilled' && idbOrdersRes.value && Array.isArray(idbOrdersRes.value)) {
+          setUserOrders(idbOrdersRes.value);
+        }
+      } catch (err) {
         console.warn('[Storage] Hydration error fallback', err);
-        if (isMounted) setIsStorageHydrated(true);
-      });
+      } finally {
+        if (isMounted) {
+          setIsStorageHydrated(true);
+        }
+      }
+    }
+
+    hydrateStorage();
 
     return () => {
       isMounted = false;
@@ -253,6 +303,11 @@ export default function App() {
   useEffect(() => {
     if (!isStorageHydrated) return;
     safeSetStorage('melofy_tracks_v3', tracks);
+    tracks.forEach((t) => {
+      if (t.audioUrl && (t.audioUrl.startsWith('data:') || t.audioUrl.startsWith('blob:'))) {
+        idbSetAudio(t.id, t.audioUrl).catch(() => {});
+      }
+    });
   }, [tracks, isStorageHydrated]);
 
   useEffect(() => {
@@ -609,6 +664,7 @@ export default function App() {
         activeSection={activeSection}
         enableHeroVideo={siteContent.hero.enableBackgroundVideo}
         heroVideoUrl={siteContent.hero.backgroundVideoUrl}
+        heroVideoPoster={siteContent.hero.backgroundVideoPoster}
         heroVideoOpacity={siteContent.hero.backgroundVideoOpacity}
         heroVideoFit={siteContent.hero.backgroundVideoFit}
         heroVideoBlur={siteContent.hero.backgroundVideoBlur}

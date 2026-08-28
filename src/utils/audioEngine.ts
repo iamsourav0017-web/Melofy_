@@ -584,6 +584,87 @@ class StudioAudioEngine {
       // Audio policies fallback
     }
   }
+
+  /**
+   * Generates a spatial harmonic chime when interacting with the 3D studio value cards
+   */
+  public playPillarChime(pillarIndex: number) {
+    if (this.isMuted) return;
+    try {
+      const ctx = this.initContext();
+      if (!ctx) return;
+
+      const chords: number[][] = [
+        [261.63, 329.63, 392.00, 523.25], // C Major story resonance (Pillar 1)
+        [293.66, 369.99, 440.00, 587.33], // D Major / Pentatonic fusion (Pillar 2)
+        [329.63, 415.30, 493.88, 659.25], // E Major Studio Master brilliance (Pillar 3)
+        [349.23, 440.00, 523.25, 698.46]  // F Major Speed / Precision chime (Pillar 4)
+      ];
+
+      const notes = chords[pillarIndex % chords.length] || chords[0];
+      const now = ctx.currentTime;
+
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const filter = ctx.createBiquadFilter();
+
+        osc.type = pillarIndex === 2 ? 'sawtooth' : 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.045);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(pillarIndex === 2 ? 3200 : 2000, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.linearRampToValueAtTime(0.035, now + idx * 0.045 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.00001, now + idx * 0.045 + 0.45);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain || ctx.destination);
+
+        osc.start(now + idx * 0.045);
+        osc.stop(now + idx * 0.045 + 0.48);
+      });
+    } catch (_) {}
+  }
+
+  /**
+   * Generates a sparkling micro harmonic ping when stat numbers reach target and flash
+   */
+  public playStatFlashSound(variant: number = 0) {
+    if (this.isMuted) return;
+    try {
+      const ctx = this.initContext();
+      if (!ctx) return;
+
+      const pitches = [1046.5, 1318.51, 1567.98]; // C6, E6, G6
+      const targetFreq = pitches[variant % pitches.length] || 1046.5;
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(targetFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(targetFreq * 1.05, now + 0.08);
+
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(800, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(0.028, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.00001, now + 0.32);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain || ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.34);
+    } catch (_) {}
+  }
 }
 
 export const studioAudio = new StudioAudioEngine();

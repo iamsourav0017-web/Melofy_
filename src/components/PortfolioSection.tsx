@@ -11,6 +11,7 @@ import { CDVinylDisc } from './CDVinylDisc';
 import { studioAudio } from '../utils/audioEngine';
 import { premiumEase, defaultViewport } from '../utils/motionTransitions';
 import { Magnetic, SpecularCard } from './InteractiveEffects';
+import { ParallaxFloatingAura } from './ParallaxContainer';
 
 interface PortfolioSectionProps {
   tracks: Track[];
@@ -218,6 +219,25 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
         ref={stickyContainerRef}
         className="sticky top-0 h-screen w-full flex flex-col justify-between py-6 sm:py-10 px-4 sm:px-8 max-w-[1500px] mx-auto overflow-hidden select-none z-20"
       >
+        {/* Ambient Depth Floating Auras */}
+        <ParallaxFloatingAura
+          color="var(--accent)"
+          size={450}
+          top="15%"
+          left="5%"
+          speed={0.4}
+          yRange={[60, -60]}
+          opacity={0.08}
+        />
+        <ParallaxFloatingAura
+          color="#3B82F6"
+          size={380}
+          bottom="10%"
+          right="10%"
+          speed={0.6}
+          yRange={[80, -80]}
+          opacity={0.06}
+        />
         
         {/* 1. Header Bar: Title, Badge, and Progress */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[var(--card-border)] pb-4">

@@ -9,31 +9,50 @@ const DB_VERSION = 1;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
-function getDB(): Promise<IDBDatabase> {
+export function getDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
 
   dbPromise = new Promise((resolve, reject) => {
     if (typeof window === 'undefined' || !window.indexedDB) {
+      dbPromise = null;
       reject(new Error('IndexedDB is not available'));
       return;
     }
 
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+    try {
+      const request = window.indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
+      };
 
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
+      request.onsuccess = () => {
+        const db = request.result;
+        db.onclose = () => {
+          dbPromise = null;
+        };
+        db.onversionchange = () => {
+          db.close();
+          dbPromise = null;
+        };
+        resolve(db);
+      };
 
-    request.onerror = () => {
-      reject(request.error);
-    };
+      request.onerror = () => {
+        dbPromise = null;
+        reject(request.error || new Error('Failed to open IndexedDB'));
+      };
+
+      request.onblocked = () => {
+        console.warn('[Storage] IndexedDB open blocked');
+      };
+    } catch (e) {
+      dbPromise = null;
+      reject(e);
+    }
   });
 
   return dbPromise;
@@ -44,13 +63,23 @@ export async function idbSet<T>(key: string, value: T): Promise<void> {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.onabort = () => {
+        console.warn(`[Storage] Transaction aborted for ${key}:`, tx.error);
+        reject(tx.error);
+      };
+      tx.onerror = () => {
+        console.warn(`[Storage] Transaction error for ${key}:`, tx.error);
+        reject(tx.error);
+      };
+      tx.oncomplete = () => {
+        resolve();
+      };
       const store = tx.objectStore(STORE_NAME);
       const req = store.put(value, key);
-      req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
   } catch (err) {
-    console.warn('[Storage] IndexedDB set failed', err);
+    console.warn(`[Storage] IndexedDB set failed for key: ${key}`, err);
   }
 }
 
@@ -59,13 +88,15 @@ export async function idbGet<T>(key: string): Promise<T | null> {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readonly');
+      tx.onabort = () => resolve(null);
+      tx.onerror = () => resolve(null);
       const store = tx.objectStore(STORE_NAME);
       const req = store.get(key);
-      req.onsuccess = () => resolve(req.result !== undefined ? (req.result as T) : null);
-      req.onerror = () => reject(req.error);
+      req.onsuccess = () => resolve(req.result !== undefined && req.result !== null ? (req.result as T) : null);
+      req.onerror = () => resolve(null);
     });
   } catch (err) {
-    console.warn('[Storage] IndexedDB get failed', err);
+    console.warn(`[Storage] IndexedDB get failed for key: ${key}`, err);
     return null;
   }
 }
@@ -75,13 +106,14 @@ export async function idbRemove(key: string): Promise<void> {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.onabort = () => resolve();
+      tx.onerror = () => resolve();
+      tx.oncomplete = () => resolve();
       const store = tx.objectStore(STORE_NAME);
-      const req = store.delete(key);
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      store.delete(key);
     });
   } catch (err) {
-    console.warn('[Storage] IndexedDB remove failed', err);
+    console.warn(`[Storage] IndexedDB remove failed for key: ${key}`, err);
   }
 }
 
@@ -90,10 +122,11 @@ export async function idbClear(): Promise<void> {
     const db = await getDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.onabort = () => resolve();
+      tx.onerror = () => resolve();
+      tx.oncomplete = () => resolve();
       const store = tx.objectStore(STORE_NAME);
-      const req = store.clear();
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+      store.clear();
     });
   } catch (err) {
     console.warn('[Storage] IndexedDB clear failed', err);
@@ -200,18 +233,39 @@ export async function optimizeImageFile(
 
 /**
  * Persists data into both localStorage (for instant synchronous startup)
- * and IndexedDB (for large images, artwork, and persistent state across reloads).
+ * and IndexedDB (for large images, artwork, audio tracks, and persistent state across reloads).
  */
 export function safeSetStorage<T>(key: string, val: T): void {
-  try {
-    const serialized = JSON.stringify(val);
-    localStorage.setItem(key, serialized);
-  } catch (err) {
-    console.warn(`[Storage] localStorage quota reached for ${key}, falling back to IndexedDB.`, err);
-  }
+  // Always persist full fidelity to IndexedDB
+  idbSet(key, val).catch((err) => {
+    console.warn(`[Storage] IndexedDB set failed for ${key}`, err);
+  });
 
-  // Also asynchronously persist to IndexedDB for safety
-  idbSet(key, val).catch(() => {});
+  // Also attempt to save to localStorage, stripping large data URLs if needed to prevent 5MB quota errors
+  try {
+    if (key === 'melofy_tracks_v3' && Array.isArray(val)) {
+      const lightweightTracks = val.map((t: any) => ({
+        ...t,
+        audioUrl: t.audioUrl && t.audioUrl.length > 500 ? undefined : t.audioUrl
+      }));
+      localStorage.setItem(key, JSON.stringify(lightweightTracks));
+    } else if (key === 'melofy_content_v1' && val && typeof val === 'object') {
+      const valObj = val as any;
+      const bgUrl = valObj.hero?.backgroundVideoUrl;
+      const lightweightContent = {
+        ...valObj,
+        hero: {
+          ...valObj.hero,
+          backgroundVideoUrl: bgUrl && bgUrl.length > 500 ? undefined : bgUrl
+        }
+      };
+      localStorage.setItem(key, JSON.stringify(lightweightContent));
+    } else {
+      localStorage.setItem(key, JSON.stringify(val));
+    }
+  } catch (err) {
+    console.warn(`[Storage] localStorage quota reached for ${key}, full data preserved in IndexedDB.`, err);
+  }
 }
 
 export function safeGetStorage<T>(key: string, fallback: T): T {
@@ -222,4 +276,16 @@ export function safeGetStorage<T>(key: string, fallback: T): T {
   } catch (_) {
     return fallback;
   }
+}
+
+export async function idbSetAudio(trackId: string, audioDataUrl: string): Promise<void> {
+  return idbSet(`melofy_audio_${trackId}`, audioDataUrl);
+}
+
+export async function idbGetAudio(trackId: string): Promise<string | null> {
+  return idbGet<string>(`melofy_audio_${trackId}`);
+}
+
+export async function idbRemoveAudio(trackId: string): Promise<void> {
+  return idbRemove(`melofy_audio_${trackId}`);
 }

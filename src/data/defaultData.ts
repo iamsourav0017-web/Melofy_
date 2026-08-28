@@ -137,7 +137,8 @@ export const DEFAULT_SITE_CONTENT: FullSiteContent = {
     backgroundVideoLoop: true,
     backgroundVideoMuted: true,
     backgroundVideoPlaybackRate: 1.0,
-    backgroundVideoOverlayTint: 'vignette'
+    backgroundVideoOverlayTint: 'vignette',
+    backgroundVideoPoster: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=1920&q=80'
   },
   about: {
     badge: 'ABOUT MELOFY',

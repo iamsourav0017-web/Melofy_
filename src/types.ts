@@ -172,6 +172,7 @@ export interface HeroContent {
   backgroundVideoMuted?: boolean; // true / false
   backgroundVideoPlaybackRate?: number; // 0.5 to 2.0
   backgroundVideoOverlayTint?: 'none' | 'subtle' | 'vignette' | 'gradient' | 'dark';
+  backgroundVideoPoster?: string; // Poster image URL placeholder for instant initial render
 }
 
 export interface AboutValuePillar {

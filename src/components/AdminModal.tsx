@@ -38,7 +38,7 @@ import {
 } from '../types';
 import { THEME_PRESETS } from '../data/defaultData';
 import { studioAudio } from '../utils/audioEngine';
-import { optimizeImageFile } from '../utils/mediaStorage';
+import { optimizeImageFile, idbSet, idbSetAudio, idbRemoveAudio } from '../utils/mediaStorage';
 import { MelofyLogo } from './MelofyLogo';
 
 interface AdminModalProps {
@@ -384,14 +384,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
     e.preventDefault();
     if (!trackTitle.trim()) return;
 
+    const trackId = editingTrackId || `track_${Date.now()}`;
+    const cleanAudioUrl = trackAudioUrl.trim() || undefined;
+
     const newTrack: Track = {
-      id: editingTrackId || `track_${Date.now()}`,
+      id: trackId,
       title: trackTitle.trim(),
       genre: trackGenre.trim() || 'Romantic / Cinematic',
       category: trackCategory,
       description: trackDesc.trim() || 'Custom composed studio track.',
       duration: Number(trackDuration) || 60,
-      audioUrl: trackAudioUrl.trim() || undefined,
+      audioUrl: cleanAudioUrl,
       synthPreset: trackSynthPreset,
       bpm: Number(trackBpm) || 90,
       scaleKey: trackKey.trim() || 'C Major',
@@ -414,9 +417,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       updated = updated.map((t) => (t.id === newTrack.id ? t : { ...t, isFeatured: false }));
     }
 
+    // Persist audio and tracks directly to IndexedDB immediately for 100% durable persistence
+    if (cleanAudioUrl && (cleanAudioUrl.startsWith('data:') || cleanAudioUrl.startsWith('blob:'))) {
+      idbSetAudio(trackId, cleanAudioUrl).catch(console.error);
+    }
+    idbSet('melofy_tracks_v3', updated).catch(console.error);
+
     onUpdateTracks(updated);
     resetTrackForm();
-    showFlash(editingTrackId ? 'Track updated successfully!' : 'New sample track added to studio catalogue!');
+    showFlash(editingTrackId ? 'Track updated & saved to studio storage!' : 'New sample track added to studio catalogue!');
   };
 
   const handleEditTrack = (t: Track) => {
@@ -441,6 +450,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const handleDeleteTrack = (id: string) => {
     if (confirm('Are you sure you want to remove this track from catalogue?')) {
       const updated = tracks.filter((t) => t.id !== id);
+      idbRemoveAudio(id).catch(() => {});
+      idbSet('melofy_tracks_v3', updated).catch(console.error);
       onUpdateTracks(updated);
       showFlash('Track removed from studio catalogue.');
     }

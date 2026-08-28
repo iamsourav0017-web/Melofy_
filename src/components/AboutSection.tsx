@@ -1,10 +1,11 @@
 import React from 'react';
-import { Music, Heart, Clock, Award } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { AboutContent } from '../types';
 import { EditableText } from './EditableText';
 import { premiumEase, defaultViewport } from '../utils/motionTransitions';
-import { SpecularCard, AudioReactiveSection, KineticBadge, AcousticWaveDivider } from './InteractiveEffects';
+import { AudioReactiveSection, KineticBadge } from './InteractiveEffects';
+import { AboutPillarCard3D } from './AboutPillarCard3D';
+import { ParallaxSection, ParallaxLayer, ParallaxFloatingAura } from './ParallaxContainer';
 
 interface AboutSectionProps {
   content: AboutContent;
@@ -22,22 +23,44 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <AudioReactiveSection
+    <ParallaxSection
       id="about"
-      isPlaying={isPlaying}
-      className="py-24 bg-transparent border-t border-[var(--card-border)] z-10"
+      className="relative py-24 bg-transparent border-t border-[var(--card-border)] z-10 overflow-hidden"
       style={{
         paddingLeft: 'clamp(20px, 5vw, 80px)',
         paddingRight: 'clamp(20px, 5vw, 80px)'
       }}
     >
-      <div className="max-w-[1440px] mx-auto">
+      {/* 3D Ambient Musical Wave & Particle Background Depth Layer with Parallax */}
+      <ParallaxFloatingAura
+        color="var(--accent)"
+        size={400}
+        top="10%"
+        left="-5%"
+        speed={0.6}
+        yRange={[80, -80]}
+        opacity={0.12}
+      />
+      <ParallaxFloatingAura
+        color="#F43F5E"
+        size={360}
+        bottom="5%"
+        right="-5%"
+        speed={0.8}
+        yRange={[100, -100]}
+        opacity={0.08}
+      />
+
+      <div className="max-w-[1440px] mx-auto relative z-10">
         
-        {/* Editorial 2-Column Layout */}
+        {/* Editorial 2-Column Layout with Parallax Depth */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           
-          {/* Left Column: Heading & Studio Marker */}
-          <div className="lg:col-span-5 space-y-4">
+          {/* Left Column: Heading & Studio Marker with Steady Parallax Anchorage */}
+          <ParallaxLayer
+            yRange={[20, -20]}
+            className="lg:col-span-5 space-y-4"
+          >
             {/* Studio badge with kinetic pulse */}
             <KineticBadge isPlaying={isPlaying} delay={0}>
               <EditableText
@@ -100,11 +123,28 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
                 as="p"
               />
             </motion.div>
-          </div>
 
-          {/* Right Column: Editorial Mission Description & Pillars */}
-          <div className="lg:col-span-7 space-y-10">
-            {/* 400ms: Large descriptive paragraph */}
+            {/* Interactive 3D Guide Callout */}
+            <motion.div
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={defaultViewport}
+              transition={{ duration: 0.75, delay: 0.45, ease: premiumEase }}
+              className="pt-4 hidden lg:block"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-[var(--card-border)] text-xs font-code text-[var(--text-muted)]">
+                <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+                <span>Move cursor over cards to explore in 3D & sound</span>
+              </div>
+            </motion.div>
+          </ParallaxLayer>
+
+          {/* Right Column: Editorial Mission Description & 3D Interactive Pillars with Elevation Parallax */}
+          <ParallaxLayer
+            yRange={[40, -40]}
+            className="lg:col-span-7 space-y-8"
+          >
+            {/* Large descriptive paragraph */}
             <motion.div
               initial={shouldReduceMotion ? false : { opacity: 0, y: 26 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -121,179 +161,95 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               />
             </motion.div>
 
-            {/* Studio Values / Distinction Grid: Staggered feature cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
-              {/* 550ms: First feature card */}
+            {/* Studio Values / Distinction Grid: 4 Interactive 3D Animated Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+              {/* Pillar 1: Purely Story-Driven */}
               <motion.div
                 initial={shouldReduceMotion ? false : { opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={defaultViewport}
-                transition={{ duration: 0.8, delay: 0.55, ease: premiumEase }}
+                transition={{ duration: 0.8, delay: 0.5, ease: premiumEase }}
                 className="flex flex-col h-full"
               >
-                <SpecularCard
-                  borderRadius="16px"
-                  spotlightColor="rgba(21, 188, 223, 0.12)"
-                  className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] space-y-3 transition-all hover:border-[var(--accent)]/40 shadow-xs h-full"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
-                    <Heart className="w-5 h-5" />
-                  </div>
-                  <EditableText
-                    value={content.pillar1.title}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar1: { ...content.pillar1, title: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    className="font-display font-bold text-base text-[var(--text-main)] block"
-                    as="h3"
-                  />
-                  <EditableText
-                    value={content.pillar1.description}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar1: { ...content.pillar1, description: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    multiline
-                    className="font-body text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed block"
-                    as="p"
-                  />
-                </SpecularCard>
+                <AboutPillarCard3D
+                  pillar={content.pillar1}
+                  index={0}
+                  isEditMode={isEditMode}
+                  isPlaying={isPlaying}
+                  onUpdate={(updated) =>
+                    onUpdateContent({
+                      pillar1: { ...content.pillar1, ...updated }
+                    })
+                  }
+                />
               </motion.div>
 
-              {/* 700ms: Second feature card */}
+              {/* Pillar 2: Any Genre & Language */}
               <motion.div
                 initial={shouldReduceMotion ? false : { opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={defaultViewport}
-                transition={{ duration: 0.8, delay: 0.7, ease: premiumEase }}
+                transition={{ duration: 0.8, delay: 0.65, ease: premiumEase }}
                 className="flex flex-col h-full"
               >
-                <SpecularCard
-                  borderRadius="16px"
-                  spotlightColor="rgba(21, 188, 223, 0.12)"
-                  className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] space-y-3 transition-all hover:border-[var(--accent)]/40 shadow-xs h-full"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
-                    <Music className="w-5 h-5" />
-                  </div>
-                  <EditableText
-                    value={content.pillar2.title}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar2: { ...content.pillar2, title: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    className="font-display font-bold text-base text-[var(--text-main)] block"
-                    as="h3"
-                  />
-                  <EditableText
-                    value={content.pillar2.description}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar2: { ...content.pillar2, description: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    multiline
-                    className="font-body text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed block"
-                    as="p"
-                  />
-                </SpecularCard>
+                <AboutPillarCard3D
+                  pillar={content.pillar2}
+                  index={1}
+                  isEditMode={isEditMode}
+                  isPlaying={isPlaying}
+                  onUpdate={(updated) =>
+                    onUpdateContent({
+                      pillar2: { ...content.pillar2, ...updated }
+                    })
+                  }
+                />
               </motion.div>
 
-              {/* 850ms: Third feature card */}
+              {/* Pillar 3: Studio-Grade Master */}
               <motion.div
                 initial={shouldReduceMotion ? false : { opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={defaultViewport}
-                transition={{ duration: 0.8, delay: 0.85, ease: premiumEase }}
+                transition={{ duration: 0.8, delay: 0.8, ease: premiumEase }}
                 className="flex flex-col h-full"
               >
-                <SpecularCard
-                  borderRadius="16px"
-                  spotlightColor="rgba(21, 188, 223, 0.12)"
-                  className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] space-y-3 transition-all hover:border-[var(--accent)]/40 shadow-xs h-full"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
-                    <Award className="w-5 h-5" />
-                  </div>
-                  <EditableText
-                    value={content.pillar3.title}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar3: { ...content.pillar3, title: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    className="font-display font-bold text-base text-[var(--text-main)] block"
-                    as="h3"
-                  />
-                  <EditableText
-                    value={content.pillar3.description}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar3: { ...content.pillar3, description: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    multiline
-                    className="font-body text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed block"
-                    as="p"
-                  />
-                </SpecularCard>
+                <AboutPillarCard3D
+                  pillar={content.pillar3}
+                  index={2}
+                  isEditMode={isEditMode}
+                  isPlaying={isPlaying}
+                  onUpdate={(updated) =>
+                    onUpdateContent({
+                      pillar3: { ...content.pillar3, ...updated }
+                    })
+                  }
+                />
               </motion.div>
 
-              {/* 1000ms: Fourth feature card */}
+              {/* Pillar 4: Guaranteed 3-Day Delivery */}
               <motion.div
                 initial={shouldReduceMotion ? false : { opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={defaultViewport}
-                transition={{ duration: 0.8, delay: 1.0, ease: premiumEase }}
+                transition={{ duration: 0.8, delay: 0.95, ease: premiumEase }}
                 className="flex flex-col h-full"
               >
-                <SpecularCard
-                  borderRadius="16px"
-                  spotlightColor="rgba(21, 188, 223, 0.12)"
-                  className="p-6 bg-[var(--card-bg)] border border-[var(--card-border)] space-y-3 transition-all hover:border-[var(--accent)]/40 shadow-xs h-full"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <EditableText
-                    value={content.pillar4.title}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar4: { ...content.pillar4, title: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    className="font-display font-bold text-base text-[var(--text-main)] block"
-                    as="h3"
-                  />
-                  <EditableText
-                    value={content.pillar4.description}
-                    onSave={(val) =>
-                      onUpdateContent({
-                        pillar4: { ...content.pillar4, description: val }
-                      })
-                    }
-                    isEditingGlobal={isEditMode}
-                    multiline
-                    className="font-body text-xs sm:text-sm text-[var(--text-muted)] leading-relaxed block"
-                    as="p"
-                  />
-                </SpecularCard>
+                <AboutPillarCard3D
+                  pillar={content.pillar4}
+                  index={3}
+                  isEditMode={isEditMode}
+                  isPlaying={isPlaying}
+                  onUpdate={(updated) =>
+                    onUpdateContent({
+                      pillar4: { ...content.pillar4, ...updated }
+                    })
+                  }
+                />
               </motion.div>
             </div>
-          </div>
+          </ParallaxLayer>
         </div>
       </div>
-    </AudioReactiveSection>
+    </ParallaxSection>
   );
 };

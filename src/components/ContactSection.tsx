@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { InquirySubmission, ContactContent, UserProfile } from '../types';
 import { EditableText } from './EditableText';
 import { premiumEase } from '../utils/motionTransitions';
+import { ParallaxSection, ParallaxLayer, ParallaxFloatingAura } from './ParallaxContainer';
 
 interface ContactSectionProps {
   selectedPackage: string;
@@ -145,20 +146,40 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <section
+    <ParallaxSection
       id="contact"
-      className="relative w-full py-24 bg-transparent border-t border-[#171A1C]/[0.08] dark:border-white/10 z-10"
+      className="relative w-full py-24 bg-transparent border-t border-[#171A1C]/[0.08] dark:border-white/10 z-10 overflow-hidden"
       style={{
         paddingLeft: 'clamp(20px, 5vw, 80px)',
         paddingRight: 'clamp(20px, 5vw, 80px)'
       }}
     >
-      <div className="max-w-[1440px] mx-auto">
+      {/* Background Parallax Auras */}
+      <ParallaxFloatingAura
+        color="var(--accent)"
+        size={420}
+        top="5%"
+        left="-6%"
+        speed={0.55}
+        yRange={[85, -85]}
+        opacity={0.09}
+      />
+      <ParallaxFloatingAura
+        color="#F43F5E"
+        size={360}
+        bottom="10%"
+        right="-4%"
+        speed={0.7}
+        yRange={[75, -75]}
+        opacity={0.07}
+      />
+
+      <div className="max-w-[1440px] mx-auto relative z-10">
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
           
-          {/* Left Column: Heading & Studio Reassurance */}
-          <div className="lg:col-span-5 space-y-6">
+          {/* Left Column: Heading & Studio Reassurance with Parallax */}
+          <ParallaxLayer yRange={[20, -20]} className="lg:col-span-5 space-y-6">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
               <EditableText
@@ -245,10 +266,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </ParallaxLayer>
 
-          {/* Right Column: Interactive Brief Form */}
-          <div className="lg:col-span-7">
+          {/* Right Column: Interactive Brief Form with Parallax */}
+          <ParallaxLayer yRange={[35, -35]} className="lg:col-span-7">
             <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden text-[var(--text-main)]">
               
               {/* Google Account Sync Bar */}
@@ -502,11 +523,11 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               )}
 
             </div>
-          </div>
+          </ParallaxLayer>
 
         </div>
 
       </div>
-    </section>
+    </ParallaxSection>
   );
 };
